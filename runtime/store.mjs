@@ -980,13 +980,16 @@ export class MemoryStore {
       seen.add(id);
       const r = this.record(id);
       if (r?.record_type !== "memory") continue;
+      if (["withdrawn", "superseded"].includes(r.state)) continue;
       records.push(this.inspect(id));
       if (depth >= hops) continue;
       for (const l of this.links(id)) {
         if (l.state !== "current") continue;
         links.set(l.id, l);
         const next = l.source === id ? l.target : l.source;
-        if (this.head(next)?.record_type === "memory")
+        const target = this.head(next);
+        if (target?.record_type === "memory" &&
+            !["withdrawn", "superseded"].includes(target.state))
           pending.push({ id: next, depth: depth + 1 });
       }
     }

@@ -380,3 +380,25 @@ test("search combines unordered terms across name, body and condition; short and
     assert.equal(s.proof('searchable').token, before);
   } finally { s.close(); }
 });
+
+test("recall does not reactivate retired memories or traverse them as bridges", () => {
+  const s = setup();
+  try {
+    const live = { ...memory('live'), text: 'Unique replacement procedure' };
+    const retired = { ...memory('retired'), state: 'superseded' };
+    const withdrawn = { ...memory('withdrawn'), state: 'withdrawn' };
+    const behind = { ...memory('behind'), text: 'Unrelated historical neighbor' };
+    apply(s, [put('memory', live), put('memory', retired), put('memory', withdrawn),
+      put('memory', behind), put('link', link('revision', 'live', 'retired', 'revises')),
+      put('link', link('old-neighbor', 'retired', 'behind', 'related')),
+      put('link', link('withdrawn-edge', 'live', 'withdrawn', 'related'))],
+      ['live', 'retired', 'withdrawn', 'behind', 'revision', 'old-neighbor', 'withdrawn-edge', 's']);
+    const before = s.proof('live').token;
+    const recalled = s.recall('Unique replacement', { hops: 3 });
+    assert.deepEqual(recalled.records.map(r => r.id), ['live']);
+    assert.equal(s.inspect('retired').state, 'superseded');
+    assert.equal(s.inspect('withdrawn').state, 'withdrawn');
+    assert.equal(s.links('retired').some(l => l.id === 'revision'), true);
+    assert.equal(s.proof('live').token, before);
+  } finally { s.close(); }
+});
