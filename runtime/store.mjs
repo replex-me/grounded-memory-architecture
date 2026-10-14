@@ -148,7 +148,10 @@ function shape(rule, value) {
 }
 
 export class MemoryStore {
-  constructor(database, { owned = false, validateChange = null, afterChange = null } = {}) {
+  constructor(
+    database,
+    { owned = false, validateChange = null, afterChange = null } = {},
+  ) {
     this.db =
       typeof database === "string" ? new DatabaseSync(database) : database;
     this.owned = owned || typeof database === "string";
@@ -369,7 +372,14 @@ export class MemoryStore {
       .filter((id) => this.head(id)?.record_type === "memory")
       .sort(cpCompare);
   }
-  validateRecord(type, r) {
+  validateRecord(
+    type,
+    r,
+    readSource = (id) => {
+      const source = this.source(id);
+      return { source, chars: Array.from(source.text) };
+    },
+  ) {
     shape(schema.$defs[type], r);
     text(r.id, "id");
     version(r.revision);
@@ -424,8 +434,7 @@ export class MemoryStore {
         assert(r.basis.length, "Semantic relation needs basis");
     }
     for (const q of r.basis) {
-      const s = this.source(q.input_id),
-        chars = Array.from(s.text);
+      const { source: s, chars } = readSource(q.input_id);
       assert(
         s.sha256 === q.sha256 &&
           Number.isSafeInteger(q.start) &&
@@ -466,6 +475,14 @@ export class MemoryStore {
         const [input, unit] = JSON.parse(key);
         assert(this.unitGuard(input, unit) === want, "Concurrent unit change");
       }
+      const sourceCache = new Map();
+      const readSource = (id) => {
+        if (!sourceCache.has(id)) {
+          const source = this.source(id);
+          sourceCache.set(id, { source, chars: Array.from(source.text) });
+        }
+        return sourceCache.get(id);
+      };
       const changed = new Set(),
         touched = new Set(),
         reviews = [],
@@ -518,8 +535,7 @@ export class MemoryStore {
           changed.add(op.id);
         } else if (op.op === "review") reviews.push(op);
         else if (op.op === "unit") {
-          const s = this.source(op.input_id),
-            chars = Array.from(s.text);
+          const { source: s, chars } = readSource(op.input_id);
           text(op.key, "unit key");
           text(op.reason, "unit reason");
           assert(
@@ -606,7 +622,7 @@ export class MemoryStore {
             Object.hasOwn(change.expect, id) || touched.has(id),
             "Expected endpoint/basis required: " + id,
           );
-        this.validateRecord("link", r);
+        this.validateRecord("link", r, readSource);
         this.put("link", r);
         if (r.type !== "related") changed.add(semanticDependent(r));
         if (old && old.type !== "related") changed.add(semanticDependent(old));

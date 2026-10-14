@@ -186,3 +186,64 @@ test("invalid calendar date and malformed Unicode rejected", () => {
     s.close();
   }
 });
+test("adapter metadata failure rolls back core records and request receipt", () => {
+  const s = setup();
+  try {
+    s.db.exec("CREATE TABLE adapter(value TEXT)");
+    s.afterChange = () => {
+      s.db.exec("INSERT INTO adapter VALUES('partial')");
+      throw new Error("Adapter failure");
+    };
+    const plan = prepareEvolution(s, {
+      ...base,
+      request_id: "adapter-failure",
+      memories: [{ ...memory, text: "Changed" }],
+    });
+    assert.throws(() => s.apply(plan), /Adapter failure/);
+    assert.equal(s.raw("method").revision, 1);
+    assert.equal(s.receipt("adapter-failure"), null);
+    assert.equal(s.db.prepare("SELECT count(*) n FROM adapter").get().n, 0);
+  } finally {
+    s.close();
+  }
+});
+test("large source is verified once per atomic unit batch", () => {
+  const s = setup();
+  try {
+    const text = "Paragraph with condition and exception.\n\n".repeat(10000),
+      input = {
+        ...original,
+        id: "large",
+        text,
+        sha256: createHash("sha256").update(text).digest("hex"),
+      };
+    s.apply(
+      prepareEvolution(s, {
+        ...base,
+        request_id: "large-source",
+        sources: [input],
+      }),
+    );
+    let reads = 0;
+    const source = s.source.bind(s);
+    s.source = (id) => {
+      reads++;
+      return source(id);
+    };
+    const width = "Paragraph with condition and exception.\n\n".length;
+    const units = Array.from({ length: 1000 }, (_, i) => ({
+      input_id: "large",
+      key: "p" + i,
+      start: i * width,
+      end: (i + 1) * width,
+      outcome: "unknown",
+      targets: [],
+      reason: "Await semantic review",
+    }));
+    s.apply(prepareEvolution(s, { ...base, request_id: "large-units", units }));
+    assert.equal(reads, 1);
+    assert.equal(s.stats().units.find((u) => u.outcome === "unknown").n, 1000);
+  } finally {
+    s.close();
+  }
+});
