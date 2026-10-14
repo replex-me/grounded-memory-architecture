@@ -5,5 +5,5 @@
 규범은 spec/model.md, 데이터 형식은 schema/model.schema.json에 둔다.
 연구 근거와 설계 선택을 구분하고 뇌 재현, 진실 자동 판정, 최고 성능을 주장하지 않는다.
 단기기억끼리 연결하지 않으며, 출처 연결과 장기기억 내부 연결을 구분한다.
-공개 명칭은 제안 상태다. 아파치 2.0, 공개 계정 replex-me는 승인됐다.
+공개 명칭은 Grounded Memory Architecture(GMA), 공개 주소는 replex-me/grounded-memory-architecture다. 아파치 2.0, 공개 계정 replex-me는 승인됐다.
 검사는 로컬에서 실행하며 유료 클라우드나 자동 배포를 추가하지 않는다.

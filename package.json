@@ -1,6 +1,6 @@
 {
-  "name": "memory-architecture-runtime",
-  "version": "0.2.0-draft.1",
+  "name": "grounded-memory-architecture",
+  "version": "0.2.0-draft.2",
   "private": true,
   "type": "module",
   "engines": {"node": ">=22.16"},
