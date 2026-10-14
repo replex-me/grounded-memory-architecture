@@ -148,11 +148,12 @@ function shape(rule, value) {
 }
 
 export class MemoryStore {
-  constructor(database, { owned = false, validateChange = null } = {}) {
+  constructor(database, { owned = false, validateChange = null, afterChange = null } = {}) {
     this.db =
       typeof database === "string" ? new DatabaseSync(database) : database;
     this.owned = owned || typeof database === "string";
     this.validateChange = validateChange;
+    this.afterChange = afterChange;
     this.db.exec("PRAGMA foreign_keys=ON;PRAGMA busy_timeout=5000;");
   }
   close() {
@@ -376,7 +377,7 @@ export class MemoryStore {
       text(r.text, "text");
       text(r.source, "source");
       assert(hash(r.text) === r.sha256, "Source hash mismatch");
-      date(r.observed_at);
+      if (r.observed_at !== null) date(r.observed_at);
       date(r.recorded_at);
       assert(["available", "withdrawn"].includes(r.state), "Source state");
       assert(
@@ -671,6 +672,7 @@ export class MemoryStore {
           this.db
             .prepare("INSERT INTO memory_change_members VALUES(?,?)")
             .run(change.request_id, id);
+      if (this.afterChange) this.afterChange(change, result, this);
       return result;
     }, true);
   }

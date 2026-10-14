@@ -179,8 +179,15 @@
           ]
         },
         "observed_at": {
-          "type": "string",
-          "format": "date-time"
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time"
+            },
+            {
+              "type": "null"
+            }
+          ]
         },
         "recorded_at": {
           "type": "string",
