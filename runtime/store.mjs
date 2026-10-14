@@ -547,7 +547,24 @@ export class MemoryStore {
             this.validateRecord(type, r);
             this.put(type, r);
           } else links.push({ r, old });
+        } else if (op.op === "annotate_input") {
+          assert(
+            Object.hasOwn(change.expect, op.id),
+            "Expected source required",
+          );
+          assert(!touched.has(op.id), "Duplicate source mutation");
+          touched.add(op.id);
+          const r = this.raw(op.id);
+          assert(this.head(op.id)?.record_type === "input", "Unknown source");
+          r.origin_group = op.origin_group;
+          r.observed_at = op.observed_at;
+          r.revision++;
+          this.validateRecord("input", r);
+          this.put("input", r);
+          changed.add(op.id);
         } else if (op.op === "withdraw_input") {
+          assert(!touched.has(op.id), "Duplicate source mutation");
+          touched.add(op.id);
           assert(
             Object.hasOwn(change.expect, op.id),
             "Expected source required",
@@ -673,6 +690,13 @@ export class MemoryStore {
           "Review token/state conflict",
         );
         text(op.reason, "Review reason");
+        for (const link of p.links)
+          if (link.state === "current")
+            for (const b of link.basis)
+              assert(
+                this.head(b.input_id)?.state === "available",
+                "Withdrawn active basis: " + b.input_id,
+              );
         for (const n of p.nodes)
           if (kinds.has(n.kind) && !reviewing.has(n.id))
             assert(

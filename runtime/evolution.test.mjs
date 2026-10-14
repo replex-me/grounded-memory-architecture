@@ -268,3 +268,74 @@ test("runtime contract rejects misspelled operations, unknown fields and invalid
     s.close();
   }
 });
+test("later source identity and time annotation changes evidence without rewriting its original", () => {
+  const s = setup();
+  try {
+    const before = s.source("original");
+    const change = {
+      ...base,
+      request_id: "source-annotation",
+      expect: s.guard(["original"]),
+      operations: [
+        {
+          op: "annotate_input",
+          id: "original",
+          origin_group: null,
+          observed_at: null,
+        },
+      ],
+    };
+    const result = s.apply(change);
+    assert.equal(s.source("original").text, before.text);
+    assert.equal(s.source("original").sha256, before.sha256);
+    assert.equal(s.source("original").revision, 2);
+    assert.equal(s.evidence("method").support_groups.length, 0);
+    assert.ok(result.affected.includes("method"));
+    s.apply({
+      ...change,
+      request_id: "identity-confirmed",
+      expect: s.guard(["original"]),
+      operations: [
+        {
+          op: "annotate_input",
+          id: "original",
+          origin_group: "verified-trial",
+          observed_at: at,
+        },
+      ],
+    });
+    assert.deepEqual(s.evidence("method").support_groups, ["verified-trial"]);
+  } finally {
+    s.close();
+  }
+});
+test("review cannot certify a belief while an active semantic relation uses withdrawn evidence", () => {
+  const s = setup();
+  try {
+    s.apply({
+      ...base,
+      request_id: "withdraw",
+      expect: s.guard(["original"]),
+      operations: [{ op: "withdraw_input", id: "original" }],
+    });
+    assert.throws(
+      () =>
+        s.apply({
+          ...base,
+          request_id: "invalid-review",
+          expect: s.guard(["method"]),
+          operations: [
+            {
+              op: "review",
+              id: "method",
+              token: s.proof("method").token,
+              reason: "Still active invalid evidence",
+            },
+          ],
+        }),
+      /Withdrawn active basis/,
+    );
+  } finally {
+    s.close();
+  }
+});

@@ -23,14 +23,14 @@ flowchart LR
 - [핵심 명세](spec/model.md): 기록, 관계, 상태, 근거 집계, 갱신과 검토 최신성.
 - [교환과 구현 지침](spec/interoperability.md): 기존 표준 대응, 토큰, 국소 조회와 저장.
 - [평가 계획](spec/evaluation.md): 합성 검사와 실제 위키 비교, 안정화 관문.
-- [데이터 스키마](schema/model.schema.json)와 [변경 스키마](schema/change.schema.json).
+- [기록 스키마](schema/model.schema.json), [참조 전이 계약](schema/change.schema.json), [영속 변경 계약](schema/runtime-change.schema.json).
 - [합성 예제](examples/snapshot.json), [참조 검사·전이](reference/model.py), [적합성 검사](tests/test_model.py).
 - [영속 실행 코어](runtime/README.md): 국소 충돌·거래·재시작·변경 이력·의미 갱신·그래프 회상.
 - [실제 시스템 구조](spec/system.md): 위키 어댑터와 전체 원문 구간의 처리.
 
 ## 실행
 
-Python 3.10 이상과 검증 의존성 하나가 필요하다. 실제 문서·DB·AI 키·클라우드가 필요하지 않다.
+Python 3.10 이상과 검증 의존성 하나, 영속 코어에는 Node.js 22.13 이상이 필요하다. 실제 문서·DB·AI 키·클라우드가 필요하지 않다.
 
 ```bash
 python3 -m venv .venv
@@ -38,15 +38,17 @@ python3 -m venv .venv
 .venv/bin/python -m unittest discover -s tests -v
 .venv/bin/python reference/model.py examples/snapshot.json
 .venv/bin/python -m examples.demo
+node --test runtime/*.test.mjs
+node examples/persistent-demo.mjs
 ```
 
 검사기는 형식뿐 아니라 금지된 원본 간 연결, 해시·인용 구간, 조건, 중복 사건, 반례, 철회, 간접 영향과 검토 최신성을 검사한다. 실행 예제에서 같은 시험의 요약을 넣어도 지지 사건 수가 늘지 않으며 새 반례가 들어오면 관련 기억과 절차가 재검토 상태로 바뀐다.
 
 ## 범위와 현재 검증
 
-상태는 **공개 초안 0.1**이다. 생물학적 단기·장기기억의 재현, 인지 전체의 설명, 국제 표준 승인, 다른 접근보다 높은 성능을 주장하지 않는다. 입력 기록과 기억의 이분법, 원본끼리 연결하지 않는 경계는 업무용 관리 선택이다.
+상태는 **공개 구현 초안 0.2**다. 생물학적 단기·장기기억의 재현, 인지 전체의 설명, 국제 표준 승인, 다른 접근보다 높은 성능을 주장하지 않는다. 입력 기록과 기억의 이분법, 원본끼리 연결하지 않는 경계는 업무용 관리 선택이다.
 
-참조 전이는 메모리 내 함수로, 실패 시 입력 객체를 바꾸지 않고 성공 결과를 반환한다. DB의 영속성·인증·권한·복구나 실제 위키의 의미 정확성을 검증하지 않는다. 안정화에는 외부 독립 구현의 교환과 실제 전체 입력 평가가 필요하다. 세부 검증은 [검증 기록](VALIDATION.md)을 따른다.
+메모리 내 참조 전이와 SQLite 영속 코어를 함께 제공한다. 영속 코어는 서로 다른 연결의 동시 수정, 거래 실패, 재시작 후 결과 확인, 근거·관계 변화와 영향 전파를 검사했다. 인증·권한은 적용 환경의 책임이며 실제 자료의 의미 정확성을 자동으로 인증하지 않는다. 안정화에는 외부 독립 구현의 교환과 실제 업무 결과 평가가 필요하다. 세부 검증은 [검증 기록](VALIDATION.md)을 따른다.
 
 특정 DB, AI 모델, 자동 추출, 벡터 검색, 웹 화면을 강제하지 않는다. 화면의 하이퍼링크는 구조화된 관계에서 파생한다. 공개 배포 자료에는 합성 예제만 포함한다.
 

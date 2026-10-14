@@ -30,9 +30,9 @@ const plan = prepareEvolution(store, {
 - `recall`: 문자 검색으로 찾은 기억에서 관계를 따라 전제·반례·근거를 읽고 질문에 따른 그래프 활성도로 정렬한다. 활성도는 질문 관련성이며 믿음의 참일 확률이 아니다.
 - `evidence`: 같은 적용 조건의 독립 사건 집단과 충돌을 집계한다. 사용량과 지지 수를 합치지 않는다.
 
-변경 계약은 request_id·actor·reason·recorded_at·expect·operations다. expect는 실제 읽은 기억/관계/원자료 ID→검증 토큰 또는 새 ID의 null이다. 원문 구간 변경에는 expect_units도 필요하다. put의 type은 input/memory/link이며 record는 모델 스키마를 따른다. withdraw_input, review, unit, use, invalidate도 지원한다.
+[영속 변경 스키마](../schema/runtime-change.schema.json)는 코드가 실제 검증하는 계약이다. 메모리 내 참조 전이의 전체 revision 계약과 혼용하지 않는다. 변경 계약은 request_id·actor·reason·recorded_at·expect·operations다. expect는 실제 읽은 기억/관계/원자료 ID→검증 토큰 또는 새 ID의 null이다. 원문 구간 변경에는 expect_units도 필요하다. put의 type은 input/memory/link이며 record는 모델 스키마를 따른다. annotate_input, withdraw_input, review, unit, use, invalidate도 지원한다.
 
-원문 등록은 불변이고 정정은 새 원문 버전과 기존 근거의 명시적인 갱신으로 처리한다. 기억의 의미·조건이 바뀌면 버전이 올라간다. 새 관계와 관계 철회는 의존 집합의 토큰도 바꾼다. 미검토 전제에 기대고 검토를 확정할 수 없으며 순환 전제는 집합을 함께 검토한다.
+원문 본문과 해시는 불변이다. 나중에 확인한 경험 시점·동일 사건 집단은 annotate_input으로 원인을 남겨 정정하며 관련 기억을 재검토한다. 본문 정정은 새 원문 버전과 기존 근거의 명시적인 갱신으로 처리한다. 기억의 의미·조건이 바뀌면 버전이 올라간다. 새 관계와 관계 철회는 의존 집합의 토큰도 바꾼다. 미검토 전제에 기대고 검토를 확정할 수 없으며 순환 전제는 집합을 함께 검토한다.
 
 `validateChange`는 같은 쓰기 거래 안에서 실행되는 적용 환경의 사전조건 확인 함수다. 외부 문서 버전이나 권한 같은 정책을 검증할 때 사용한다. 실제 사용자의 인증과 채택 권한은 적용 환경이 관리해야 한다. actor 문자열만으로 권한이 생기지 않는다.
 
@@ -45,3 +45,7 @@ const plan = prepareEvolution(store, {
 ```bash
 node --test runtime/*.test.mjs
 ```
+
+`afterChange`는 코어 변경과 같은 거래에서 어댑터의 등록 상태를 반영한다. 실패하면 코어 기록·변경 결과·어댑터 상태 모두 취소된다. 원문 구간을 여러 개 처리할 때는 같은 불변 원문을 그 거래에서 한 번 검증하며 구간마다 전체 원문을 다시 읽지 않는다.
+
+합성 영속 예제는 `node examples/persistent-demo.mjs`로 실행한다. 같은 경험의 재인용, 새로운 반례, 의미의 조건 추가, 의존 절차의 검토 만료, 재시작 후 변경 결과와 원본 보존을 보여주고 임시 DB는 제거한다.

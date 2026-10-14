@@ -27,4 +27,6 @@ for path in ROOT.rglob("*.md"):
         if "://" not in target and not target.startswith("#") and not (path.parent / target.split("#")[0]).exists():
             raise SystemExit(f"없는 문서 링크: {path.name}: {target}")
 subprocess.run([sys.executable, "-m", "unittest", "discover", "-s", "tests", "-v"], cwd=ROOT, check=True)
-print("스키마·성공/실패 예제·문서 링크·전이 검사 통과")
+subprocess.run(["node", "--test", *[str(p.relative_to(ROOT)) for p in sorted((ROOT / "runtime").glob("*.test.mjs"))]], cwd=ROOT, check=True)
+subprocess.run(["node", "examples/persistent-demo.mjs"], cwd=ROOT, check=True)
+print("스키마·예제·문서 링크·참조 전이·영속 코어·재시작 예제 검사 통과")

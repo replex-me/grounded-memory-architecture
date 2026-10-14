@@ -248,6 +248,47 @@
               "reason"
             ],
             "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "op": {
+                "const": "annotate_input"
+              },
+              "id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "origin_group": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "observed_at": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "op",
+              "id",
+              "origin_group",
+              "observed_at"
+            ],
+            "additionalProperties": false
           }
         ]
       }
