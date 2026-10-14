@@ -933,17 +933,21 @@ export class MemoryStore {
       args.push(scope);
     }
     if (query?.trim()) {
-      const q = query.trim();
-      if (Array.from(q).length >= 3) {
-        where.push(
-          "r.id IN (SELECT id FROM memory_search WHERE memory_search MATCH ?)",
-        );
-        args.push('"' + q.replaceAll('"', '""') + '"');
-      } else {
-        where.push(
-          "(instr(r.text,?)>0 OR instr(json_extract(r.data,'$.extensions.\"memory:title\"'),?)>0 OR instr(json_extract(r.data,'$.context.condition'),?)>0 OR instr(r.scope,?)>0)",
-        );
-        args.push(q, q, q, q);
+      // Search terms may occur in different fields and in any order.
+      // Literal quoting prevents words from becoming FTS operators.
+      where.push("json_extract(r.data,'$.state') NOT IN ('withdrawn','superseded')");
+      for (const term of new Set(query.trim().split(/\s+/u))) {
+        if (Array.from(term).length >= 3) {
+          where.push(
+            "r.id IN (SELECT id FROM memory_search WHERE memory_search MATCH ?)",
+          );
+          args.push('"' + term.replaceAll('"', '""') + '"');
+        } else {
+          where.push(
+            "(instr(r.text,?)>0 OR instr(json_extract(r.data,'$.extensions.\"memory:title\"'),?)>0 OR instr(json_extract(r.data,'$.context.condition'),?)>0)",
+          );
+          args.push(term, term, term);
+        }
       }
     }
     const condition = where.join(" AND "),

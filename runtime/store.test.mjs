@@ -356,3 +356,27 @@ test("units track all source outcomes and corruption is detected on source read"
     s.close();
   }
 });
+
+test("search combines unordered terms across name, body and condition; short and long terms use the same state boundary", () => {
+  const s = setup();
+  try {
+    const m = { ...memory('searchable'), text: 'Available river workflow',
+      context: { ...ctx, condition: 'AA required' },
+      extensions: { 'memory:title': 'Bridge archive' } };
+    const retired = { ...m, id: 'retired', state: 'superseded' };
+    apply(s, [put('memory', m), put('memory', retired)], ['searchable', 'retired']);
+    const ids = query => s.list({ query }).records.map(r => r.id);
+    assert.deepEqual(ids('river archive AA'), ['searchable']);
+    assert.deepEqual(ids(' AA\tarchive  river '), ['searchable']);
+    assert.deepEqual(ids('AA'), ['searchable']);
+    assert.deepEqual(ids('archive'), ['searchable']);
+    assert.deepEqual(ids('river absent'), []);
+    assert.deepEqual(ids('river OR archive'), []);
+    assert.deepEqual(ids('" OR "'), []);
+    assert.equal(s.list().records.some(r => r.id === 'retired'), true);
+    const before = s.proof('searchable').token;
+    s.rebuildSearch();
+    assert.deepEqual(ids('archive AA river'), ['searchable']);
+    assert.equal(s.proof('searchable').token, before);
+  } finally { s.close(); }
+});
