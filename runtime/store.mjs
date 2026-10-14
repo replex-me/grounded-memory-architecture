@@ -29,8 +29,54 @@ const cpCompare = (a, b) => {
     if (x[i] !== y[i]) return x[i] - y[i];
   return x.length - y.length;
 };
-export const canonical = (value) =>
-  JSON.stringify(value, (_, v) =>
+function jsonValue(value, ancestors = new Set()) {
+  if (value === null || typeof value === "boolean") return;
+  if (typeof value === "string") {
+    assert(value.isWellFormed(), "Malformed JSON Unicode");
+    return;
+  }
+  if (typeof value === "number") {
+    assert(Number.isFinite(value), "Nonfinite JSON number");
+    return;
+  }
+  assert(value && typeof value === "object", "Not a JSON value");
+  assert(!ancestors.has(value), "Cyclic JSON value");
+  ancestors.add(value);
+  assert(
+    Object.getOwnPropertySymbols(value).length === 0,
+    "Symbol keys are not JSON",
+  );
+  if (Array.isArray(value)) {
+    assert(
+      Object.keys(value).length === value.length,
+      "Sparse or decorated JSON array",
+    );
+    for (let i = 0; i < value.length; i++) {
+      assert(Object.hasOwn(value, i), "Sparse JSON array");
+      jsonValue(value[i], ancestors);
+    }
+  } else {
+    const prototype = Object.getPrototypeOf(value);
+    assert(
+      prototype === null || prototype === Object.prototype,
+      "Non-JSON object",
+    );
+    for (const [key, descriptor] of Object.entries(
+      Object.getOwnPropertyDescriptors(value),
+    )) {
+      assert(
+        descriptor.enumerable && Object.hasOwn(descriptor, "value"),
+        "JSON must contain data properties",
+      );
+      assert(key.isWellFormed(), "Malformed JSON key");
+      jsonValue(descriptor.value, ancestors);
+    }
+  }
+  ancestors.delete(value);
+}
+export const canonical = (value) => {
+  jsonValue(value);
+  return JSON.stringify(value, (_, v) =>
     v && !Array.isArray(v) && typeof v === "object"
       ? Object.fromEntries(
           Object.keys(v)
@@ -39,6 +85,7 @@ export const canonical = (value) =>
         )
       : v,
   );
+};
 export const digest = (value) => hash(canonical(value));
 const assert = (v, m) => {
   if (!v) throw new Error(m);

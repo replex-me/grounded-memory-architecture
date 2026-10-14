@@ -411,3 +411,31 @@ test("a failed inner memory change rolls back its savepoint without committing t
     s.close();
   }
 });
+
+test("non-JSON extension values cannot be silently lost or converted by hashing", () => {
+  const s = setup();
+  try {
+    const cycle = {};
+    cycle.self = cycle;
+    for (const value of [
+      undefined,
+      NaN,
+      Infinity,
+      new Date(),
+      new Map(),
+      cycle,
+      "\ud800",
+    ]) {
+      const p = prepareEvolution(s, {
+        ...base,
+        request_id: "invalid-json",
+        memories: [{ ...memory, extensions: { "test:value": value } }],
+      });
+      assert.throws(() => s.apply(p));
+    }
+    assert.equal(s.raw("method").revision, 1);
+    assert.equal(s.receipt("invalid-json"), null);
+  } finally {
+    s.close();
+  }
+});
