@@ -1,0 +1,105 @@
+{
+  "format": "memory-architecture/0.1",
+  "revision": 1,
+  "inputs": [
+    {
+      "id": "urn:example:input:trial-1",
+      "revision": 1,
+      "text": "시험 1: 상태를 먼저 확인한 뒤 복구 절차를 선택해 서비스를 복구했다.",
+      "sha256": "44fd5e024f01d9ee8bcaa0179f8cb89ed3d518bb02da36867bb488e9e48ada39",
+      "source": "urn:example:simulation",
+      "origin_group": "urn:example:event:trial-1",
+      "observed_at": "2026-01-01T00:00:00Z",
+      "recorded_at": "2026-01-01T00:00:00Z",
+      "state": "available"
+    }
+  ],
+  "memories": [
+    {
+      "id": "urn:example:memory:diagnose",
+      "revision": 1,
+      "text": "이 조건에서는 상태를 먼저 확인한 뒤 복구 절차를 선택하는 것이 유효하다.",
+      "kind": "belief",
+      "context": {
+        "scope": "synthetic-service",
+        "condition": "일반 요청량이며 진단에 사용할 수 있는 상태 정보가 존재한다",
+        "valid_from": null,
+        "valid_until": null
+      },
+      "state": "current",
+      "review_required": true,
+      "review": null
+    },
+    {
+      "id": "urn:example:memory:procedure",
+      "revision": 1,
+      "text": "복구 절차를 선택하기 전에 현재 상태 정보를 확인한다.",
+      "kind": "procedure",
+      "context": {
+        "scope": "synthetic-service",
+        "condition": "일반 요청량이며 진단에 사용할 수 있는 상태 정보가 존재한다",
+        "valid_from": null,
+        "valid_until": null
+      },
+      "state": "current",
+      "review_required": true,
+      "review": null
+    }
+  ],
+  "links": [
+    {
+      "id": "urn:example:link:trial-1",
+      "revision": 1,
+      "source": "urn:example:input:trial-1",
+      "target": "urn:example:memory:diagnose",
+      "type": "supports",
+      "context": {
+        "scope": "synthetic-service",
+        "condition": "일반 요청량이며 진단에 사용할 수 있는 상태 정보가 존재한다",
+        "valid_from": null,
+        "valid_until": null
+      },
+      "state": "current",
+      "basis": [
+        {
+          "input_id": "urn:example:input:trial-1",
+          "sha256": "44fd5e024f01d9ee8bcaa0179f8cb89ed3d518bb02da36867bb488e9e48ada39",
+          "start": 0,
+          "end": 40,
+          "quote": "시험 1: 상태를 먼저 확인한 뒤 복구 절차를 선택해 서비스를 복구했다."
+        }
+      ],
+      "review": {
+        "actor": "urn:example:reviewer",
+        "reason": "합성 시험의 구간과 적용 조건을 확인했다"
+      }
+    },
+    {
+      "id": "urn:example:link:requires",
+      "revision": 1,
+      "source": "urn:example:memory:procedure",
+      "target": "urn:example:memory:diagnose",
+      "type": "requires",
+      "context": {
+        "scope": "synthetic-service",
+        "condition": "일반 요청량이며 진단에 사용할 수 있는 상태 정보가 존재한다",
+        "valid_from": null,
+        "valid_until": null
+      },
+      "state": "current",
+      "basis": [
+        {
+          "input_id": "urn:example:input:trial-1",
+          "sha256": "44fd5e024f01d9ee8bcaa0179f8cb89ed3d518bb02da36867bb488e9e48ada39",
+          "start": 0,
+          "end": 40,
+          "quote": "시험 1: 상태를 먼저 확인한 뒤 복구 절차를 선택해 서비스를 복구했다."
+        }
+      ],
+      "review": {
+        "actor": "urn:example:reviewer",
+        "reason": "합성 시험의 구간과 적용 조건을 확인했다"
+      }
+    }
+  ]
+}

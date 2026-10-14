@@ -1,0 +1,69 @@
+[
+  {
+    "stage": "원본에서 두 기억과 관계를 형성",
+    "revision": 1,
+    "support_groups": [
+      "urn:example:event:trial-1"
+    ],
+    "opposition_groups": [],
+    "conflict_groups": [],
+    "review_required": {
+      "urn:example:memory:diagnose": true,
+      "urn:example:memory:procedure": true
+    }
+  },
+  {
+    "stage": "현재 판단 검토 완료",
+    "revision": 3,
+    "support_groups": [
+      "urn:example:event:trial-1"
+    ],
+    "opposition_groups": [],
+    "conflict_groups": [],
+    "review_required": {
+      "urn:example:memory:diagnose": false,
+      "urn:example:memory:procedure": false
+    }
+  },
+  {
+    "stage": "재인용은 독립 근거를 늘리지 않음",
+    "revision": 4,
+    "support_groups": [
+      "urn:example:event:trial-1"
+    ],
+    "opposition_groups": [],
+    "conflict_groups": [],
+    "review_required": {
+      "urn:example:memory:diagnose": true,
+      "urn:example:memory:procedure": true
+    }
+  },
+  {
+    "stage": "새 반례가 판단과 의존 절차의 재검토를 요구",
+    "revision": 5,
+    "support_groups": [
+      "urn:example:event:trial-1"
+    ],
+    "opposition_groups": [
+      "urn:example:event:trial-2"
+    ],
+    "conflict_groups": [],
+    "review_required": {
+      "urn:example:memory:diagnose": true,
+      "urn:example:memory:procedure": true
+    }
+  },
+  {
+    "stage": "측정 오류로 반례 원본 철회; 재검토는 유지",
+    "revision": 6,
+    "support_groups": [
+      "urn:example:event:trial-1"
+    ],
+    "opposition_groups": [],
+    "conflict_groups": [],
+    "review_required": {
+      "urn:example:memory:diagnose": true,
+      "urn:example:memory:procedure": true
+    }
+  }
+]

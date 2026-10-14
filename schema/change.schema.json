@@ -1,0 +1,149 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:memory-architecture:draft:0.1:change",
+  "type": "object",
+  "properties": {
+    "request_id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "expected_revision": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "actor": {
+      "type": "string",
+      "minLength": 1
+    },
+    "reason": {
+      "type": "string",
+      "minLength": 1
+    },
+    "recorded_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "operations": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "op": {
+                "const": "put"
+              },
+              "collection": {
+                "const": "inputs"
+              },
+              "record": {
+                "$ref": "urn:memory-architecture:draft:0.1:model#/$defs/input"
+              }
+            },
+            "required": [
+              "op",
+              "collection",
+              "record"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "op": {
+                "const": "put"
+              },
+              "collection": {
+                "const": "memories"
+              },
+              "record": {
+                "$ref": "urn:memory-architecture:draft:0.1:model#/$defs/memory"
+              }
+            },
+            "required": [
+              "op",
+              "collection",
+              "record"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "op": {
+                "const": "put"
+              },
+              "collection": {
+                "const": "links"
+              },
+              "record": {
+                "$ref": "urn:memory-architecture:draft:0.1:model#/$defs/link"
+              }
+            },
+            "required": [
+              "op",
+              "collection",
+              "record"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "op": {
+                "const": "withdraw_input"
+              },
+              "id": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "op",
+              "id"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "op": {
+                "const": "review"
+              },
+              "id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "token": {
+                "type": "string",
+                "pattern": "^[0-9a-f]{64}$"
+              },
+              "reason": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "op",
+              "id",
+              "token",
+              "reason"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      }
+    }
+  },
+  "required": [
+    "request_id",
+    "expected_revision",
+    "actor",
+    "reason",
+    "recorded_at",
+    "operations"
+  ],
+  "additionalProperties": false
+}

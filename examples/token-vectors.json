@@ -1,0 +1,10 @@
+[
+  {
+    "memory_id": "urn:example:memory:diagnose",
+    "token": "2d95a0e852ad737288f4516f5fe9bf7afb129c4ebc3aff2819afafcc6e331ae6"
+  },
+  {
+    "memory_id": "urn:example:memory:procedure",
+    "token": "a44a1e9e1fc1888bb09ba1ec81bd38d4c5692edfbde2d788bcbc29574191bbf2"
+  }
+]
