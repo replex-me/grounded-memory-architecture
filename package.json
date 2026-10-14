@@ -1,0 +1,10 @@
+{
+  "name": "memory-architecture-runtime",
+  "version": "0.2.0-draft.1",
+  "private": true,
+  "type": "module",
+  "engines": {"node": ">=22.13"},
+  "exports": {".": "./runtime/store.mjs"},
+  "scripts": {"test": "node --test runtime/*.test.mjs"},
+  "license": "Apache-2.0"
+}

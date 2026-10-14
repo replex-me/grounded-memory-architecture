@@ -25,6 +25,8 @@ flowchart LR
 - [평가 계획](spec/evaluation.md): 합성 검사와 실제 위키 비교, 안정화 관문.
 - [데이터 스키마](schema/model.schema.json)와 [변경 스키마](schema/change.schema.json).
 - [합성 예제](examples/snapshot.json), [참조 검사·전이](reference/model.py), [적합성 검사](tests/test_model.py).
+- [영속 실행 코어](runtime/README.md): 국소 충돌·거래·재시작·변경 이력·의미 갱신·그래프 회상.
+- [실제 시스템 구조](spec/system.md): 위키 어댑터와 전체 원문 구간의 처리.
 
 ## 실행
 

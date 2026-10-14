@@ -191,6 +191,12 @@
             "available",
             "withdrawn"
           ]
+        },
+        "extensions": {
+          "type": "object",
+          "propertyNames": {
+            "pattern": "^[a-z][a-z0-9.-]*:[a-zA-Z0-9._-]+$"
+          }
         }
       },
       "required": [
@@ -255,6 +261,12 @@
               "type": "null"
             }
           ]
+        },
+        "extensions": {
+          "type": "object",
+          "propertyNames": {
+            "pattern": "^[a-z][a-z0-9.-]*:[a-zA-Z0-9._-]+$"
+          }
         }
       },
       "required": [
@@ -339,6 +351,12 @@
               "type": "null"
             }
           ]
+        },
+        "extensions": {
+          "type": "object",
+          "propertyNames": {
+            "pattern": "^[a-z][a-z0-9.-]*:[a-zA-Z0-9._-]+$"
+          }
         }
       },
       "required": [
