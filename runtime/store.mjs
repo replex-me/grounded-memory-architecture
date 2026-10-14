@@ -129,6 +129,13 @@ const context = (v) => {
       "Invalid validity interval",
     );
 };
+const searchableText = (r) =>
+  [
+    r.extensions?.["memory:title"] || "",
+    r.text,
+    r.context?.condition || "",
+    r.context?.scope || "",
+  ].join("\n");
 const semanticDependent = (l) => (l.type === "requires" ? l.source : l.target);
 const json = (r) => (r ? JSON.parse(r.data) : null);
 const schema = JSON.parse(
@@ -268,6 +275,28 @@ export class MemoryStore {
         ?.value === "1",
       "Unsupported memory schema",
     );
+    if (
+      this.db
+        .prepare("SELECT value FROM memory_meta WHERE key='search_version'")
+        .get()?.value !== "2"
+    )
+      this.rebuildSearch();
+  }
+  rebuildSearch() {
+    this.db.exec("DELETE FROM memory_search");
+    const insert = this.db.prepare("INSERT INTO memory_search VALUES(?,?,?)");
+    for (const row of this.db
+      .prepare("SELECT data FROM memory_records WHERE type='memory'")
+      .all()) {
+      const r = json(row);
+      if (!["withdrawn", "superseded"].includes(r.state))
+        insert.run(r.id, searchableText(r), r.context.scope);
+    }
+    this.db
+      .prepare(
+        "INSERT INTO memory_meta VALUES('search_version','2') ON CONFLICT(key) DO UPDATE SET value=excluded.value",
+      )
+      .run();
   }
   transaction(fn, write = false) {
     const nested = this.db.isTransaction,
@@ -336,7 +365,7 @@ export class MemoryStore {
       if (!["withdrawn", "superseded"].includes(r.state))
         this.db
           .prepare("INSERT INTO memory_search VALUES(?,?,?)")
-          .run(r.id, r.text, r.context.scope);
+          .run(r.id, searchableText(r), r.context.scope);
     }
     if (type === "link") {
       this.db
@@ -907,8 +936,10 @@ export class MemoryStore {
         );
         args.push('"' + q.replaceAll('"', '""') + '"');
       } else {
-        where.push("instr(r.text,?)>0");
-        args.push(q);
+        where.push(
+          "(instr(r.text,?)>0 OR instr(json_extract(r.data,'$.extensions.\"memory:title\"'),?)>0 OR instr(json_extract(r.data,'$.context.condition'),?)>0 OR instr(r.scope,?)>0)",
+        );
+        args.push(q, q, q, q);
       }
     }
     const condition = where.join(" AND "),
@@ -940,8 +971,7 @@ export class MemoryStore {
       if (seen.has(id)) continue;
       seen.add(id);
       const r = this.record(id);
-      if (r?.record_type !== "memory" || (scope && r.context.scope !== scope))
-        continue;
+      if (r?.record_type !== "memory") continue;
       records.push(this.inspect(id));
       if (depth >= hops) continue;
       for (const l of this.links(id)) {
@@ -1005,6 +1035,7 @@ export class MemoryStore {
       depth: hops,
       more_seeds: seeds.total > limit,
       activation_semantics: "query_relevance_not_truth",
+      scope_semantics: "seed_selection_not_access_control",
     };
   }
   stats() {

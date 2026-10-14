@@ -439,3 +439,69 @@ test("non-JSON extension values cannot be silently lost or converted by hashing"
     s.close();
   }
 });
+
+test("recall searches remembered names and conditions as well as body text", () => {
+  const s = setup();
+  try {
+    s.apply(
+      prepareEvolution(s, {
+        ...base,
+        request_id: "named",
+        memories: [
+          {
+            ...memory,
+            extensions: { "memory:title": "가격 후보" },
+            text: "Use the original volume with a confirmed quote.",
+            context: { ...context, condition: "pricing comparison" },
+          },
+        ],
+      }),
+    );
+    assert.equal(s.recall("가격").records[0].id, "method");
+    assert.equal(s.recall("pricing").records[0].id, "method");
+    const token = s.inspect("method").read_token;
+    s.db.exec(
+      "DELETE FROM memory_search;DELETE FROM memory_meta WHERE key='search_version'",
+    );
+    s.install();
+    assert.equal(s.recall("pricing").records[0].id, "method");
+    assert.equal(s.inspect("method").read_token, token);
+  } finally {
+    s.close();
+  }
+});
+
+test("scoped recall retains connected shared premises instead of discarding their meaning", () => {
+  const s = setup();
+  try {
+    const shared = {
+        ...memory,
+        id: "shared",
+        text: "A shared prerequisite.",
+        context: { ...context, scope: "company" },
+      },
+      scoped = { ...memory, context: { ...context, scope: "product" } };
+    s.apply(
+      prepareEvolution(s, {
+        ...base,
+        request_id: "shared-scope",
+        memories: [shared, scoped],
+        links: [
+          {
+            ...relation,
+            id: "shared-prerequisite",
+            source: "method",
+            target: "shared",
+            type: "requires",
+            context: scoped.context,
+          },
+        ],
+      }),
+    );
+    const result = s.recall("method", { scope: "product" });
+    assert.ok(result.records.some((r) => r.id === "shared"));
+    assert.equal(result.scope_semantics, "seed_selection_not_access_control");
+  } finally {
+    s.close();
+  }
+});
