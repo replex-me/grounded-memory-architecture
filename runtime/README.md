@@ -29,6 +29,7 @@ const plan = prepareEvolution(store, {
 - `inspect`·`history`: 현재 기억, 근거와 이전 변경의 원인을 읽는다. 검토가 최신인지 함께 표시한다.
 - `recall`: 문자 검색으로 찾은 기억에서 관계를 따라 전제·반례·근거를 읽고 질문에 따른 그래프 활성도로 정렬한다. 활성도는 질문 관련성이며 믿음의 참일 확률이 아니다.
 - `evidence`: 같은 적용 조건의 독립 사건 집단과 충돌을 집계한다. 사용량과 지지 수를 합치지 않는다.
+- `stats`: 전체 보존 기록·구간·변경 수와 현재·후보 기억의 검토 대기를 구별한다. 철회·대체 기록은 보존하되 활성 검토 대기에서 제외한다.
 
 [영속 변경 스키마](../schema/runtime-change.schema.json)는 코드가 실제 검증하는 계약이다. 메모리 내 참조 전이의 전체 revision 계약과 혼용하지 않는다. 변경 계약은 request_id·actor·reason·recorded_at·expect·operations다. expect는 실제 읽은 기억/관계/원자료 ID→검증 토큰 또는 새 ID의 null이다. 원문 구간 변경에는 expect_units도 필요하다. put의 type은 input/memory/link이며 record는 모델 스키마를 따른다. annotate_input, withdraw_input, review, unit, use, invalidate도 지원한다.
 

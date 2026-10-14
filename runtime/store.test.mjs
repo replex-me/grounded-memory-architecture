@@ -400,5 +400,9 @@ test("recall does not reactivate retired memories or traverse them as bridges", 
     assert.equal(s.inspect('withdrawn').state, 'withdrawn');
     assert.equal(s.links('retired').some(l => l.id === 'revision'), true);
     assert.equal(s.proof('live').token, before);
+    review(s, ['a', 'b', 'live', 'behind']);
+    assert.equal(s.stats().pending, 0);
+    apply(s, [put('memory', { ...memory('proposal'), state: 'candidate' })], ['proposal']);
+    assert.equal(s.stats().pending, 1);
   } finally { s.close(); }
 });

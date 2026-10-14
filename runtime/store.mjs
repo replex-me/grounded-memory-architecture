@@ -1056,7 +1056,7 @@ export class MemoryStore {
         .all(),
       pending: this.db
         .prepare(
-          "SELECT count(*) n FROM memory_records WHERE type='memory' AND json_extract(data,'$.review_required')=1",
+          "SELECT count(*) n FROM memory_records WHERE type='memory' AND json_extract(data,'$.review_required')=1 AND json_extract(data,'$.state') IN ('current','candidate')",
         )
         .get().n,
       units: this.db
