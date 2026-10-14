@@ -247,3 +247,24 @@ test("large source is verified once per atomic unit batch", () => {
     s.close();
   }
 });
+test("runtime contract rejects misspelled operations, unknown fields and invalid guards before writes", () => {
+  const s = setup();
+  try {
+    const p = prepareEvolution(s, {
+      ...base,
+      request_id: "bad-contract",
+      memories: [{ ...memory, text: "Changed" }],
+    });
+    for (const invalid of [
+      { ...p, extra: true },
+      { ...p, expect: { method: "wrong" } },
+      { ...p, operations: [{ ...p.operations[0], extra: true }] },
+      { ...p, operations: [{ op: "uses", id: "method", task_id: "x" }] },
+    ])
+      assert.throws(() => s.apply(invalid));
+    assert.equal(s.raw("method").revision, 1);
+    assert.equal(s.receipt("bad-contract"), null);
+  } finally {
+    s.close();
+  }
+});

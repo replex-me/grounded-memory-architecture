@@ -90,7 +90,27 @@ const schema = JSON.parse(
     "utf8",
   ),
 );
+const runtimeSchema = JSON.parse(
+  fs.readFileSync(
+    new URL("../schema/runtime-change.schema.json", import.meta.url),
+    "utf8",
+  ),
+);
 function shape(rule, value) {
+  if (Object.hasOwn(rule, "const"))
+    assert(value === rule.const, "Unknown constant");
+  if (rule.oneOf) {
+    const matches = rule.oneOf.filter((r) => {
+      try {
+        shape(r, value);
+        return true;
+      } catch {
+        return false;
+      }
+    });
+    assert(matches.length === 1, "Expected one schema shape");
+    return;
+  }
   if (rule.$ref) return shape(schema.$defs[rule.$ref.split("/").pop()], value);
   if (rule.anyOf) {
     assert(
@@ -133,8 +153,11 @@ function shape(rule, value) {
     if (rule.maximum !== undefined)
       assert(value <= rule.maximum, "Above maximum");
   }
-  if (Array.isArray(value) && rule.items)
-    for (const item of value) shape(rule.items, item);
+  if (Array.isArray(value)) {
+    if (rule.minItems)
+      assert(value.length >= rule.minItems, "Empty operations");
+    if (rule.items) for (const item of value) shape(rule.items, item);
+  }
   if (value && typeof value === "object" && !Array.isArray(value)) {
     for (const key of rule.required || [])
       assert(Object.hasOwn(value, key), "Missing property: " + key);
@@ -142,6 +165,11 @@ function shape(rule, value) {
       if (rule.properties?.[key]) shape(rule.properties[key], v);
       else if (rule.additionalProperties === false)
         throw new Error("Unknown property: " + key);
+      else if (
+        rule.additionalProperties &&
+        typeof rule.additionalProperties === "object"
+      )
+        shape(rule.additionalProperties, v);
       if (rule.propertyNames) shape(rule.propertyNames, key);
     }
   }
@@ -448,6 +476,7 @@ export class MemoryStore {
     }
   }
   apply(change) {
+    shape(runtimeSchema, change);
     text(change.request_id, "request_id");
     text(change.actor, "actor");
     text(change.reason, "reason");
