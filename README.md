@@ -70,7 +70,7 @@ python3 -m venv .venv
 2. [완전한 갱신 예제](docs/walkthrough.md): 단계별 실제 변화와 API 호출, 반례를 지우지 않는 정정.
 3. [비교와 품질 검토](research/quality-review.md): 가까운 구현과 겹치는 부분, 현재 부족한 부분과 검증 기준.
 4. [핵심 명세](spec/model.md), [시스템 구조](spec/system.md), [교환 지침](spec/interoperability.md): 구현이 지켜야 할 계약.
-5. [영속 코어](runtime/README.md), [모델 스키마](schema/model.schema.json), [영속 변경 스키마](schema/runtime-change.schema.json).
+5. [교환·복원 계약](spec/archive.md), [영속 코어](runtime/README.md), [모델 스키마](schema/model.schema.json), [영속 변경 스키마](schema/runtime-change.schema.json).
 6. [연구 근거](research/assessment.md), [평가 설계](spec/evaluation.md), [검증 기록](VALIDATION.md).
 
 ## 현재 구현의 범위

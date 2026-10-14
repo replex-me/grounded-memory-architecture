@@ -2,6 +2,7 @@
 // Synthetic examples only; the temporary database is removed after the demonstration.
 import fs from "node:fs";
 import assert from "node:assert/strict";
+import { exportArchive, importArchive } from "../runtime/archive.mjs";
 import os from "node:os";
 import path from "node:path";
 import { createHash } from "node:crypto";
@@ -209,7 +210,15 @@ try {
   assert.equal(store.source(one.id).text, one.text);
   assert.ok(store.history(method.id).some(h => h.id === "counterexample"));
   assert.equal(store.receipt("counterexample").request_id, receipt.request_id);
-  const report = { phases, assertions: "passed", originalPreserved: true,
+  const archive = exportArchive(store);
+  const restored = new MemoryStore(":memory:");
+  restored.install();
+  try {
+    importArchive(restored, JSON.parse(JSON.stringify(archive)));
+    assert.deepEqual(restored.inspect(method.id), store.inspect(method.id));
+    assert.deepEqual(exportArchive(restored), archive);
+  } finally { restored.close(); }
+  const report = { archiveRestored: true, phases, assertions: "passed", originalPreserved: true,
     previousCounterexamplePreserved: true,
     savedRequest: store.receipt("counterexample").request_id,
     recall: store.recall("process").records.map(r => ({ id: r.id,
@@ -221,7 +230,7 @@ try {
       console.log(`${i + 1}. ${labels[i]}: 지지 ${r.evidence.support_groups.length}, 반박 ${r.evidence.opposition_groups.length}, 사용 ${r.evidence.usage_count}, 검토 ${r.fresh ? "최신" : "필요"}, 의존 절차 ${r.dependentFresh ? "최신" : "재검토 필요"}`);
     }
     console.log("반례는 삭제하지 않았습니다. 새 조건에 대한 반박 연결만 철회했고 이전 주장과 반례의 변경 이력은 남았습니다.");
-    console.log("원본 보존·중복 방지·영향 전파·조건 정정·재검토·재시작 검증 통과");
+    console.log("원본 보존·중복 방지·영향 전파·조건 정정·재검토·재시작·별도 저장소 복원 검증 통과");
   } else console.log(JSON.stringify(report, null, 2));
 
 } finally {

@@ -1,10 +1,10 @@
 {
   "name": "grounded-memory-architecture",
-  "version": "0.2.0-draft.2",
+  "version": "0.2.0-draft.3",
   "private": true,
   "type": "module",
   "engines": {"node": ">=22.16"},
-  "exports": {".": "./runtime/store.mjs"},
+  "exports": {".": "./runtime/store.mjs", "./archive": "./runtime/archive.mjs"},
   "scripts": {"test": "node --test runtime/*.test.mjs"},
   "license": "Apache-2.0"
 }

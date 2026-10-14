@@ -36,3 +36,7 @@ reference/model.py의 review_token이 만드는 객체를 다음 방법으로 �
 change.schema.json의 expected_revision은 교환 스냅샷에 대한 참조 전이 계약이다. 운영 API가 모든 독립 변경을 전체 위키 버전 하나로 직렬화해야 한다는 뜻이 아니다. 운영 구현은 대상과 실제 읽은 의존 기억·관계·검색 범위의 버전을 비교하고, 무관한 문서 변경 때문에 재작성하지 않도록 국소 갱신 계약을 별도로 공개하는 것이 권고된다. 이 참조 함수를 그대로 대규모 위키 서버로 사용하는 것은 권고하지 않는다.
 
 출처: [PROV](https://www.w3.org/TR/prov-o/), [Web Annotation](https://www.w3.org/TR/annotation-model/), [SQLite 격리](https://www.sqlite.org/isolation.html), [RFC 8785](https://www.rfc-editor.org/rfc/rfc8785).
+
+## 영속 변경 이력의 실제 교환
+
+[변경 이력 교환·복원](archive.md)은 코어 상태를 별도 빈 저장소에 원자적으로 재생하는 실행 계약이다. 요청·결과·최종 상태를 검증하고 실패하면 전체를 롤백한다. 같은 프로파일의 왕복 검증이며 독립 구현이나 Python 참조 토큰과의 호환성을 주장하지 않는다.
