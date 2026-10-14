@@ -3,7 +3,14 @@ import assert from "node:assert/strict";
 import { DatabaseSync } from "node:sqlite";
 import { createHash } from "node:crypto";
 import { MemoryStore } from "./store.mjs";
-import { prepareEvolution } from "./evolution.mjs";
+import { prepareEvolution as guardedEvolution } from "./evolution.mjs";
+function prepareEvolution(store, judgment) {
+  const ids = judgment.memories?.map((m) => m.id) || [];
+  for (const l of judgment.links || [])
+    ids.push(l.id, l.source, l.target, ...l.basis.map((b) => b.input_id));
+  for (const u of judgment.units || []) ids.push(u.input_id, ...u.targets);
+  return guardedEvolution(store, { ...judgment, read_set: store.guard(ids) });
+}
 const context = {
     scope: "test",
     condition: "ordinary work",
@@ -335,6 +342,71 @@ test("review cannot certify a belief while an active semantic relation uses with
         }),
       /Withdrawn active basis/,
     );
+  } finally {
+    s.close();
+  }
+});
+
+test("judgments cannot silently refresh an earlier read and overwrite a newer meaning", () => {
+  const s = setup();
+  try {
+    const first = s.inspect("method"),
+      read_set = { method: first.read_token };
+    s.apply(
+      prepareEvolution(s, {
+        ...base,
+        request_id: "newer",
+        memories: [{ ...memory, text: "A newer judgment." }],
+      }),
+    );
+    assert.throws(
+      () =>
+        guardedEvolution(s, {
+          ...base,
+          request_id: "blind-overwrite",
+          memories: [{ ...memory, text: "Old judgment." }],
+        }),
+      /token actually read/,
+    );
+    assert.throws(
+      () =>
+        guardedEvolution(s, {
+          ...base,
+          request_id: "stale-judgment",
+          read_set,
+          memories: [{ ...memory, text: "Old judgment." }],
+        }),
+      /stale read/,
+    );
+    assert.equal(s.raw("method").text, "A newer judgment.");
+  } finally {
+    s.close();
+  }
+});
+test("a failed inner memory change rolls back its savepoint without committing the caller transaction", () => {
+  const s = setup();
+  try {
+    s.db.exec(
+      "CREATE TABLE host(value TEXT);BEGIN IMMEDIATE;INSERT INTO host VALUES(1)",
+    );
+    const p = prepareEvolution(s, {
+      ...base,
+      request_id: "inner",
+      memories: [{ ...memory, text: "Changed inside host transaction" }],
+    });
+    s.afterChange = () => {
+      throw new Error("Host metadata failure");
+    };
+    assert.throws(() => s.apply(p), /Host metadata/);
+    assert.equal(s.raw("method").revision, 1);
+    assert.equal(s.db.isTransaction, true);
+    s.afterChange = null;
+    s.apply(p);
+    assert.equal(s.db.isTransaction, true);
+    s.db.exec("ROLLBACK");
+    assert.equal(s.receipt("inner"), null);
+    assert.equal(s.raw("method").revision, 1);
+    assert.equal(s.db.prepare("SELECT count(*) n FROM host").get().n, 0);
   } finally {
     s.close();
   }

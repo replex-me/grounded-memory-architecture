@@ -57,16 +57,31 @@ const link = (id, from, to, type, s) => ({
   basis: [quote(s)],
   review,
 });
-const apply = (request_id, reason, changes) =>
-  store.apply(
+const apply = (request_id, reason, changes) => {
+  const ids = [];
+  for (const m of changes.memories || []) ids.push(m.id);
+  for (const l of changes.links || [])
+    ids.push(l.id, l.source, l.target, ...l.basis.map((b) => b.input_id));
+  // This single-writer demonstration reads every referenced current record before judging.
+  const read_set = Object.fromEntries(
+    [...new Set(ids)]
+      .filter((id) => store.head(id))
+      .map((id) => {
+        const read = store.inspect(id);
+        return [id, read.read_token];
+      }),
+  );
+  return store.apply(
     prepareEvolution(store, {
       request_id,
       actor,
       recorded_at,
       reason,
       ...changes,
+      read_set,
     }),
   );
+};
 try {
   const one = source(
     "trial-1",
@@ -166,13 +181,11 @@ try {
         memory: store.inspect(method.id).text,
         history: store.history(method.id).map((h) => h.reason),
         savedRequest: store.receipt("counterexample").request_id,
-        recall: store
-          .recall("process")
-          .records.map((r) => ({
-            id: r.id,
-            fresh: r.fresh,
-            activation: r.recall_activation,
-          })),
+        recall: store.recall("process").records.map((r) => ({
+          id: r.id,
+          fresh: r.fresh,
+          activation: r.recall_activation,
+        })),
         originalPreserved: store.source(one.id).text === one.text,
       },
       null,

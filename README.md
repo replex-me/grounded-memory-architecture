@@ -30,7 +30,7 @@ flowchart LR
 
 ## 실행
 
-Python 3.10 이상과 검증 의존성 하나, 영속 코어에는 Node.js 22.13 이상이 필요하다. 실제 문서·DB·AI 키·클라우드가 필요하지 않다.
+Python 3.10 이상과 검증 의존성 하나, 영속 코어에는 Node.js 22.16 이상이 필요하다. 실제 문서·DB·AI 키·클라우드가 필요하지 않다.
 
 ```bash
 python3 -m venv .venv

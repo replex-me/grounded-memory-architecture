@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 // SQLite-backed memory management. No model calls, credentials or source extraction.
 import { DatabaseSync } from "node:sqlite";
-import { createHash } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import fs from "node:fs";
 
 const hash = (s) => createHash("sha256").update(s).digest("hex");
@@ -223,13 +223,25 @@ export class MemoryStore {
     );
   }
   transaction(fn, write = false) {
-    this.db.exec(write ? "BEGIN IMMEDIATE" : "BEGIN");
+    const nested = this.db.isTransaction,
+      savepoint = "memory_" + randomUUID().replaceAll("-", "");
+    this.db.exec(
+      nested ? "SAVEPOINT " + savepoint : write ? "BEGIN IMMEDIATE" : "BEGIN",
+    );
     try {
       const r = fn();
-      this.db.exec("COMMIT");
+      assert(!r?.then, "Transaction callback must be synchronous");
+      this.db.exec(nested ? "RELEASE " + savepoint : "COMMIT");
       return r;
     } catch (e) {
-      this.db.exec("ROLLBACK");
+      try {
+        if (nested) {
+          this.db.exec("ROLLBACK TO " + savepoint);
+          this.db.exec("RELEASE " + savepoint);
+        } else this.db.exec("ROLLBACK");
+      } catch (rollback) {
+        if (e && typeof e === "object") e.rollbackError = rollback.message;
+      }
       throw e;
     }
   }
@@ -808,16 +820,19 @@ export class MemoryStore {
     if (r.record_type === "input")
       return {
         ...this.source(id),
+        read_token: this.guard([id])[id],
         units: this.db
           .prepare("SELECT * FROM memory_units WHERE input_id=? ORDER BY start")
           .all(id),
       };
-    if (r.record_type === "link") return r;
+    if (r.record_type === "link")
+      return { ...r, read_token: this.guard([id])[id] };
     const proof = this.proof(id);
     return {
       ...r,
       links: this.links(id),
       evidence: this.evidence(id),
+      read_token: proof.token,
       review_token: proof.token,
       fresh: !r.review_required && r.review?.token === proof.token,
     };

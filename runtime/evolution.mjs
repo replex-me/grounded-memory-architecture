@@ -11,6 +11,7 @@ export function prepareEvolution(
     links = [],
     units = [],
     sources = [],
+    read_set = {},
   },
 ) {
   const operations = [],
@@ -52,12 +53,21 @@ export function prepareEvolution(
       unit.key,
     );
   }
+  const expect = store.guard([...ids]);
+  for (const [id, token] of Object.entries(expect)) {
+    if (token !== null) {
+      if (!Object.hasOwn(read_set, id))
+        throw new Error("Existing record needs the token actually read: " + id);
+      if (read_set[id] !== token)
+        throw new Error("Judgment was based on a stale read: " + id);
+    }
+  }
   return {
     request_id,
     actor,
     reason,
     recorded_at,
-    expect: store.guard([...ids]),
+    expect,
     expect_units: unitVersions,
     operations,
   };

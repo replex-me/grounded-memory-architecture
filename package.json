@@ -3,7 +3,7 @@
   "version": "0.2.0-draft.1",
   "private": true,
   "type": "module",
-  "engines": {"node": ">=22.13"},
+  "engines": {"node": ">=22.16"},
   "exports": {".": "./runtime/store.mjs"},
   "scripts": {"test": "node --test runtime/*.test.mjs"},
   "license": "Apache-2.0"
