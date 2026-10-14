@@ -505,3 +505,32 @@ test("scoped recall retains connected shared premises instead of discarding thei
     s.close();
   }
 });
+
+test("causal history retains the exact previous meanings and conditions", () => {
+  const s = setup();
+  try {
+    const old = s.raw("method");
+    s.apply(
+      prepareEvolution(s, {
+        ...base,
+        request_id: "history-update",
+        memories: [
+          {
+            ...old,
+            text: "A conditionally revised meaning.",
+            context: { ...context, condition: "new condition" },
+          },
+        ],
+      }),
+    );
+    const history = s.history("method");
+    assert.equal(
+      history[0].meanings[0].text,
+      "A conditionally revised meaning.",
+    );
+    assert.equal(history[1].meanings[0].text, memory.text);
+    assert.equal(history[1].meanings[0].context.condition, context.condition);
+  } finally {
+    s.close();
+  }
+});

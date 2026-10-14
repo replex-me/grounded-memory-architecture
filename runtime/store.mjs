@@ -851,10 +851,14 @@ export class MemoryStore {
     );
     return this.db
       .prepare(
-        "SELECT json_extract(q.request,'$.actor') actor,json_extract(q.request,'$.reason') reason,json_extract(q.request,'$.recorded_at') at,q.id, q.result FROM memory_change_members m JOIN memory_requests q ON q.id=m.request_id WHERE m.record_id=? ORDER BY q.rowid DESC LIMIT ? OFFSET ?",
+        "SELECT json_extract(q.request,'$.actor') actor,json_extract(q.request,'$.reason') reason,json_extract(q.request,'$.recorded_at') at,q.id, q.result, (SELECT json_group_array(json_extract(x.value,'$.record')) FROM json_each(q.request,'$.operations') x WHERE json_extract(x.value,'$.op')='put' AND json_extract(x.value,'$.type')='memory' AND json_extract(x.value,'$.record.id')=m.record_id) meanings FROM memory_change_members m JOIN memory_requests q ON q.id=m.request_id WHERE m.record_id=? ORDER BY q.rowid DESC LIMIT ? OFFSET ?",
       )
       .all(id, limit, offset)
-      .map((r) => ({ ...r, result: JSON.parse(r.result) }));
+      .map((r) => ({
+        ...r,
+        result: JSON.parse(r.result),
+        meanings: JSON.parse(r.meanings),
+      }));
   }
   evidence(id) {
     const m = this.raw(id);
