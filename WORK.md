@@ -11,7 +11,8 @@
 완료는 공개 초안을 읽는 사람이 모델의 범위와 의미를 이해하고 합성 예제를 검사할 수 있는 상태다. 운영 위키 이관이나 과학적 성능 입증은 이 초안의 완료로 주장하지 않는다.
 
 공개 위치: https://github.com/replex-me/grounded-memory-architecture
-초안 배포: https://github.com/replex-me/grounded-memory-architecture/releases/tag/v0.1.0-draft.1
+최초 초안 배포: https://github.com/replex-me/grounded-memory-architecture/releases/tag/v0.1.0-draft.1
+현재 초안 배포: https://github.com/replex-me/grounded-memory-architecture/releases/tag/v0.2.0-draft.5
 공개 저장소를 새로 받아 검사했고 실제 배포 압축 파일도 다시 내려받아 해시와 27개 검사를 확인했다. 검증에 사용한 임시 복제·압축 해제 폴더는 제거했다.
 
 ## 공개 실행 코어
