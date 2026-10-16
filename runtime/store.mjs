@@ -220,7 +220,8 @@ function shape(rule, value) {
     for (const key of rule.required || [])
       assert(Object.hasOwn(value, key), "Missing property: " + key);
     for (const [key, v] of Object.entries(value)) {
-      if (rule.properties?.[key]) shape(rule.properties[key], v);
+      if (rule.properties && Object.hasOwn(rule.properties, key))
+        shape(rule.properties[key], v);
       else if (rule.additionalProperties === false)
         throw new Error("Unknown property: " + key);
       else if (

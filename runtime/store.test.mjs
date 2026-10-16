@@ -326,6 +326,29 @@ test("original to original links, invalid quotes, unknown fields rejected", () =
     s.close();
   }
 });
+test("prototype-named unknown fields are rejected before any runtime write", () => {
+  const s = setup();
+  try {
+    const before = s.stats().changes;
+    for (const key of ["constructor", "toString", "__proto__"])
+      for (const location of ["change", "operation", "record", "context"]) {
+        const record = structuredClone(memory("unexpected"));
+        const operation = put("memory", record);
+        const change = {
+          request_id: "reject-" + key + "-" + location,
+          actor: "tester", reason: "Schema boundary", recorded_at: at,
+          expect: s.guard([record.id]), operations: [operation],
+        };
+        const target = {change, operation, record, context: record.context}[location];
+        Object.defineProperty(target, key, {value: 0, enumerable: true});
+        assert.throws(() => s.apply(change), /Unknown property|Expected one schema shape/);
+        assert.equal(s.raw(record.id), null);
+        assert.equal(s.stats().changes, before);
+      }
+  } finally {
+    s.close();
+  }
+});
 test("units track all source outcomes and corruption is detected on source read", () => {
   const s = setup();
   try {

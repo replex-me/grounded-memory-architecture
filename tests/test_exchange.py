@@ -132,3 +132,19 @@ class ExchangeTests(unittest.TestCase):
         relation = link("urn:example:link:navigation", H, P, "related", original)
         related["links"].append(relation)
         self.assertEqual(self.node(related)["tokens"], self.node(snapshot)["tokens"])
+
+    def test_prototype_named_unknown_fields_are_rejected(self):
+        for key in ("constructor", "toString", "__proto__"):
+            for location in ("snapshot", "memory", "context", "selector"):
+                with self.subTest(key=key, location=location):
+                    snapshot, _ = initial()
+                    target = {
+                        "snapshot": snapshot,
+                        "memory": snapshot["memories"][0],
+                        "context": snapshot["memories"][0]["context"],
+                        "selector": snapshot["links"][0]["basis"][0],
+                    }[location]
+                    target[key] = 0
+                    with self.assertRaises(Invalid):
+                        validate(snapshot)
+                    self.node(snapshot, valid=False)
