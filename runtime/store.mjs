@@ -109,6 +109,10 @@ const date = (v) => {
   );
   const [year, month, day] = v.slice(0, 10).split("-").map(Number),
     d = new Date(0);
+  const [hour, minute, second] = v.slice(11, 19).split(":").map(Number);
+  assert(hour < 24 && minute < 60 && second < 60, "Invalid clock time");
+  const offset = v.match(/[+-](\d{2}):(\d{2})$/);
+  if (offset) assert(Number(offset[1]) < 24 && Number(offset[2]) < 60, "Invalid timezone offset");
   d.setUTCFullYear(year, month - 1, day);
   assert(
     year > 0 &&
@@ -227,6 +231,11 @@ function shape(rule, value) {
       if (rule.propertyNames) shape(rule.propertyNames, key);
     }
   }
+}
+
+// The exchange reader shares the schema contract, not the runtime token profile.
+export function validateModelShape(value) {
+  shape(schema, value);
 }
 
 export class MemoryStore {

@@ -4,6 +4,7 @@ from __future__ import annotations
 import copy
 import hashlib
 import json
+import math
 import re
 from datetime import datetime
 from pathlib import Path
@@ -42,7 +43,22 @@ class Invalid(ValueError):
 
 
 def encoded(value):
-    return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False)
+    def check(item):
+        if item is None or isinstance(item, bool):
+            return item
+        if isinstance(item, int) and abs(item) <= 9007199254740991:
+            return item
+        if isinstance(item, float) and math.isfinite(item) and item.is_integer() and abs(item) <= 9007199254740991:
+            return int(item)
+        if isinstance(item, str):
+            item.encode("utf-8")
+            return item
+        if isinstance(item, list):
+            return [check(child) for child in item]
+        if isinstance(item, dict) and all(isinstance(key, str) for key in item):
+            return {check(key): check(child) for key, child in item.items()}
+        raise Invalid("참조 프로파일에는 안전한 정수와 JSON 값만 허용한다")
+    return json.dumps(check(value), ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False)
 
 
 def digest(value):
