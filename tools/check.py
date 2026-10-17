@@ -29,4 +29,6 @@ for path in ROOT.rglob("*.md"):
 subprocess.run([sys.executable, "-m", "unittest", "discover", "-s", "tests", "-v"], cwd=ROOT, check=True)
 subprocess.run(["node", "--test", *[str(p.relative_to(ROOT)) for p in sorted((ROOT / "runtime").glob("*.test.mjs"))]], cwd=ROOT, check=True)
 subprocess.run(["node", "examples/persistent-demo.mjs"], cwd=ROOT, check=True)
+subprocess.run(["node", "--test", "evaluation/compare.test.mjs"], cwd=ROOT, check=True)
+subprocess.run(["node", "examples/comparison.mjs"], cwd=ROOT, check=True, stdout=subprocess.DEVNULL)
 print("스키마·예제·문서 링크·참조 전이·영속 코어·재시작 예제 검사 통과")

@@ -84,18 +84,27 @@ const apply = (request_id, reason, changes) => {
     }),
   );
 };
-const phases = [];
+const phases = [], comparisonSnapshots = [];
 const capture = (phase, id = "method") => {
   const view = store.inspect(id);
   phases.push({ phase, text: view.text, condition: view.context.condition,
     state: view.state, fresh: view.fresh, evidence: view.evidence,
-    dependentFresh: store.inspect("procedure").fresh });
+    dependentFresh: store.inspect("procedure").fresh,
+    goalFresh: store.inspect('goal').fresh, goalText: store.inspect('goal').text });
+  if (process.argv.includes('--comparison-snapshots')) {
+    const inputs = store.db.prepare("SELECT data FROM memory_records WHERE type='input' ORDER BY id").all().map(r => JSON.parse(r.data));
+    const memories = ['method', 'procedure', 'goal'].map(id => {
+      const m = store.inspect(id);
+      return {id: m.id, text: m.text, context: m.context, state: m.state, fresh: m.fresh, evidence: m.evidence, links: m.links};
+    });
+    comparisonSnapshots.push({id: phase, inputs, memories});
+  }
 };
 const reviewTogether = (request_id) => {
-  const ids = ["method", "procedure"];
+  const ids = ["method", "procedure", "goal"];
   const reads = ids.map(id => store.inspect(id));
   store.apply({ request_id, actor, recorded_at,
-    reason: "Read both meanings, conditions and all active evidence together",
+    reason: "Read all meanings, conditions and all active evidence together",
     expect: Object.fromEntries(reads.map(r => [r.id, r.read_token])),
     operations: reads.map(r => ({ op: "review", id: r.id,
       token: r.review_token, reason: "Verified the actual scope and dependencies" })) });
@@ -106,6 +115,8 @@ try {
     "The process completed an ordinary request with the required input available.",
     "trial-1",
   );
+  const intent = source('team-intent', 'The team intends to make ordinary requests useful and reliable.', null);
+  const goal = memory('goal', 'Make ordinary requests useful and reliable.', 'goal');
   const method = memory(
       "method",
       "This process can complete ordinary requests.",
@@ -119,11 +130,13 @@ try {
     "initial",
     "Read a completed trial; build a belief and its dependent procedure",
     {
-      sources: [one],
-      memories: [method, procedure],
+      sources: [one, intent],
+      memories: [method, procedure, goal],
       links: [
         link("support-1", one.id, method.id, "supports", one),
         link("prerequisite", procedure.id, method.id, "requires", one),
+        link('intent-context', intent.id, goal.id, 'context', intent),
+        link('purpose-navigation', procedure.id, goal.id, 'related', intent),
       ],
     },
   );
@@ -199,6 +212,8 @@ try {
   assert.equal(usage.evidence.usage_count, 1);
   assert.equal(failed.evidence.opposition_groups.length, 1);
   assert.equal(failed.dependentFresh, false);
+  assert.equal(failed.goalFresh, true);
+  assert.equal(failed.goalText, initial.goalText);
   assert.equal(refined.fresh, false);
   assert.equal(refined.dependentFresh, false);
   assert.equal(reviewed.fresh, true);
@@ -223,7 +238,9 @@ try {
     savedRequest: store.receipt("counterexample").request_id,
     recall: store.recall("process").records.map(r => ({ id: r.id,
       fresh: r.fresh, activation: r.recall_activation })) };
-  if (process.argv.includes("--explain")) {
+  if (process.argv.includes('--comparison-snapshots')) {
+    console.log(JSON.stringify({synthetic: true, snapshots: comparisonSnapshots}));
+  } else if (process.argv.includes("--explain")) {
     const labels = ["첫 성공과 검토", "같은 사건의 재인용", "독립된 두 번째 성공",
       "실제 사용 기록", "새로운 반례", "조건과 의존 절차 정정", "근거 재검토", "재시작"];
     for (const [i, r] of phases.entries()) {
