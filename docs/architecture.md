@@ -50,7 +50,7 @@ sequenceDiagram
     participant E as 경험 원본
     participant J as 사람 또는 에이전트
     participant S as 기억 저장소
-    participant R as 검토자
+    participant R as 같은 작성자의 검토 또는 별도 검토자
     J->>S: 관련 기억·관계·조건·이력 읽기
     S-->>J: 당시 읽은 버전과 근거
     J->>E: 정확한 원문과 반례 확인
@@ -85,3 +85,7 @@ sequenceDiagram
 ## 이름과 호환성
 
 공개 이름은 Grounded Memory Architecture다. 저장소 이름과 기존 데이터 형식 `memory-architecture/0.1`, 영속 토큰 `memory-store/1`은 역할이 다르다. 주소 변경은 데이터 의미 변경이 아니므로 기존 식별자를 유지한다. Python 참조 토큰과 Node 영속 토큰은 서로 호환되지 않는다. [교환 지침](../spec/interoperability.md)은 개념 대응이며 완전한 독립 교환 구현은 아니다.
+
+## 대화와 저장소의 실행 책임
+
+대화 중인 에이전트는 조회·의미 판단·변경안 작성·원문과 결과 검토를 수행할 수 있다. 코어는 데이터를 저장하고 구조·출처·버전 충돌을 검증한다. 작성과 검토를 나누는 것은 책임과 절차를 구별하는 것이며, 다른 유료 모델 호출을 요구하지 않는다. 별도 검토자를 쓰지 않은 경우 독립 검토로 보고하지 않는다. 참조 구현은 외부 모델 호출·모델 키·예약 모델 작업자를 포함하지 않는다.
